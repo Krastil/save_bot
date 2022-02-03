@@ -1,2 +1,2 @@
 aiogram
-async-timeout
+async

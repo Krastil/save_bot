@@ -1,1 +1,2 @@
 BOT_TOKEN = "5067513245:AAG6byVZW7JfaoefJiTkwgeCMdHsmaL1WiM"
+DB_URI = "postgres://nnmkvioldqrwlc:f7c2378371c51c2eeb619fb50899587d10e047c6240ea2d6d0d28ae375916601@ec2-52-31-219-113.eu-west-1.compute.amazonaws.com:5432/df9pokbc1l5vfd"

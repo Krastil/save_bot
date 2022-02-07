@@ -77,7 +77,7 @@ async def bot_start(message: types.Message):
     global keyboard, user_dict
     user_id = message.from_user.id
     user_dict[user_id] = UserIdFromTg(user_id)
-    base.execute('CREATE TABLE IF NOT EXISTS ' + user_dict[user_id].get_user_id_str() + ' (category, tag, description)')
+    base.execute('CREATE TABLE IF NOT EXISTS ' + user_dict[user_id].get_user_id_str() + ' (category TEXT NOT NULL, tag TEXT NOT NULL, description TEXT NOT NULL)')
     base.commit()
     await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
                          reply_markup=keyboard)
@@ -236,7 +236,7 @@ async def add_all_to_db(message: types.Message):
             access = True
 
             if x.get_com() == "add_tag" and message.text == "Пропустить":
-                x.set_tag_name("")
+                x.set_tag_name("without")
                 await add_to_db(x.get_category_name(), x.get_tag_name(), x.get_message(), x.get_user_id_str())
                 await message.answer("Сообщение добавлено")
                 await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
@@ -276,13 +276,14 @@ async def add_all_to_db(message: types.Message):
 
             if x.get_com() == "search" and message.text == "По tag":
                 array = list(set(tag_array(x.get_user_id_str())))
+                array.remove("without")
                 x.set_com("choose_tag")
                 keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
                 keyboard_for_file.add(*array)
                 await message.answer("Выберите tag", reply_markup=keyboard_for_file)
 
             if x.get_com() == "search" and message.text == "Без tag":
-                x.set_tag_name("")
+                x.set_tag_name("without")
                 array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
                 for i in array:
                     if category_with_description(i, x.get_user_id_str())[0] == "photo":
@@ -364,7 +365,7 @@ async def add_all_to_db(message: types.Message):
                 access = False
 
             if x.get_com() == "delete_message" and message.text == "Сообщения без tag":
-                x.set_tag_name("")
+                x.set_tag_name("without")
                 array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
                 var = 1
                 for i in array:
@@ -407,6 +408,7 @@ async def add_all_to_db(message: types.Message):
 
             if x.get_com() == "delete" and message.text == "Сообщение":
                 array = list(set(tag_array(x.get_user_id_str())))
+                array.remove("without")
                 x.set_com("delete_message")
                 keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
                 keyboard_for_file.add(*array, "Сообщения без tag")
@@ -414,6 +416,7 @@ async def add_all_to_db(message: types.Message):
 
             if x.get_com() == "delete" and message.text == "Tag":
                 array = list(set(tag_array(x.get_user_id_str())))
+                array.remove("without")
                 x.set_com("delete_tag")
                 keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
                 keyboard_for_file.add(*array)
@@ -430,6 +433,7 @@ async def add_all_to_db(message: types.Message):
                 x.set_category_name("text")
                 x.set_message(message.text)
                 array = list(set(tag_array(x.get_user_id_str())))
+                array.remove("without")
                 keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
                 keyboard_for_file.add(*array, "Пропустить")
                 await message.answer("Введите tag или нажмите пропустить", reply_markup=keyboard_for_file)
@@ -437,5 +441,3 @@ async def add_all_to_db(message: types.Message):
 
 if __name__ == '__main__':
     executor.start_polling(dp)
-
-

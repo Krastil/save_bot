@@ -104,59 +104,49 @@ async def add_to_db(category, tag, description, user_id_str):
 
 def category_array(user_id_str):
     new_array = []
-    array = cur.execute("SELECT category FROM " + user_id_str + "")
-    if array is None:
-        return new_array
-    else:
-        for i in array:
-            new_array.append(i[0])
-        return new_array
+    cur.execute("SELECT category FROM " + user_id_str + "")
+    array = cur.fetchall()
+    for i in array:
+        new_array.append(i[0])
+    return new_array
 
 
 def tag_array(user_id_str):
     new_array = []
-    array = cur.execute("SELECT tag FROM " + user_id_str + "")
-    if array is None:
-        return new_array
-    else:
-        for i in array:
-            new_array.append(i[0])
-        return new_array
+    cur.execute("SELECT tag FROM " + user_id_str + "")
+    array = cur.fetchall()
+    for i in array:
+        new_array.append(i[0])
+    return new_array
 
 
 def description_array(user_id_str):
     new_array = []
-    array = cur.execute("SELECT description FROM " + user_id_str + "")
-    if array is None:
-        return new_array
-    else:
-        for i in array:
-            new_array.append(i[0])
-        return new_array
+    cur.execute("SELECT description FROM " + user_id_str + "")
+    array = cur.fetchall()
+    for i in array:
+        new_array.append(i[0])
+    return new_array
 
 
 def category_with_description(description, user_id_str):
     new_array = []
-    array = cur.execute(
+    cur.execute(
         "SELECT category FROM " + user_id_str + " WHERE description = '" + description + "'")
-    if array is None:
-        return new_array
-    else:
-        for i in array:
-            new_array.append(i[0])
-        return new_array
+    array = cur.fetchall()
+    for i in array:
+        new_array.append(i[0])
+    return new_array
 
 
 def tag_array_with_description(tag, user_id_str):
     new_array = []
-    array = cur.execute(
+    cur.execute(
         "SELECT description FROM " + user_id_str + " WHERE tag = '" + tag + "'")
-    if array is None:
-        return new_array
-    else:
-        for i in array:
-            new_array.append(i[0])
-        return new_array
+    array = cur.fetchall()
+    for i in array:
+        new_array.append(i[0])
+    return new_array
 
 
 def delete_tag(tag, user_id_str):
@@ -293,7 +283,8 @@ async def add_all_to_db(message: types.Message):
 
             if x.get_com() == "search" and message.text == "По tag":
                 array = list(set(tag_array(x.get_user_id_str())))
-                array.remove("without")
+                if array.count("without"):
+                    array.remove("without")
                 x.set_com("choose_tag")
                 keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
                 keyboard_for_file.add(*array)
@@ -425,7 +416,8 @@ async def add_all_to_db(message: types.Message):
 
             if x.get_com() == "delete" and message.text == "Сообщение":
                 array = list(set(tag_array(x.get_user_id_str())))
-                array.remove("without")
+                if array.count("without"):
+                    array.remove("without")
                 x.set_com("delete_message")
                 keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
                 keyboard_for_file.add(*array, "Сообщения без tag")
@@ -433,7 +425,8 @@ async def add_all_to_db(message: types.Message):
 
             if x.get_com() == "delete" and message.text == "Tag":
                 array = list(set(tag_array(x.get_user_id_str())))
-                array.remove("without")
+                if array.count("without"):
+                    array.remove("without")
                 x.set_com("delete_tag")
                 keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
                 keyboard_for_file.add(*array)

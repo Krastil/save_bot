@@ -77,7 +77,8 @@ async def bot_start(message: types.Message):
     global keyboard, user_dict
     user_id = message.from_user.id
     user_dict[user_id] = UserIdFromTg(user_id)
-    cur.execute('CREATE TABLE IF NOT EXISTS ' + user_dict[user_id].get_user_id_str() + ' (category TEXT NOT NULL, tag TEXT NOT NULL, description TEXT NOT NULL)')
+    cur.execute("CREATE TABLE IF NOT EXISTS " + user_dict[
+        user_id].get_user_id_str() + " (category TEXT NOT NULL, tag TEXT NOT NULL, description TEXT NOT NULL)")
     base.commit()
     await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
                          reply_markup=keyboard)
@@ -96,50 +97,66 @@ async def exit_on_menu(message: types.Message):
 
 
 async def add_to_db(category, tag, description, user_id_str):
-    cur.execute('INSERT INTO ' + user_id_str + ' VALUES(?, ?, ?)', (category, tag, description))
+    cur.execute(
+        "INSERT INTO " + user_id_str + " VALUES ('" + category + "', '" + tag + "', '" + description + "')")
     base.commit()
 
 
 def category_array(user_id_str):
     new_array = []
     array = cur.execute("SELECT category FROM " + user_id_str + "")
-    for i in array:
-        new_array.append(i[0])
-    return new_array
+    if array is None:
+        return new_array
+    else:
+        for i in array:
+            new_array.append(i[0])
+        return new_array
 
 
 def tag_array(user_id_str):
     new_array = []
     array = cur.execute("SELECT tag FROM " + user_id_str + "")
-    for i in array:
-        new_array.append(i[0])
-    return new_array
+    if array is None:
+        return new_array
+    else:
+        for i in array:
+            new_array.append(i[0])
+        return new_array
 
 
 def description_array(user_id_str):
     new_array = []
     array = cur.execute("SELECT description FROM " + user_id_str + "")
-    for i in array:
-        new_array.append(i[0])
-    return new_array
+    if array is None:
+        return new_array
+    else:
+        for i in array:
+            new_array.append(i[0])
+        return new_array
 
 
 def category_with_description(description, user_id_str):
     new_array = []
     array = cur.execute(
         "SELECT category FROM " + user_id_str + " WHERE description = '" + description + "'")
-    for i in array:
-        new_array.append(i[0])
-    return new_array
+    if array is None:
+        return new_array
+    else:
+        for i in array:
+            new_array.append(i[0])
+        return new_array
 
 
 def tag_array_with_description(tag, user_id_str):
     new_array = []
     array = cur.execute(
         "SELECT description FROM " + user_id_str + " WHERE tag = '" + tag + "'")
-    for i in array:
-        new_array.append(i[0])
-    return new_array
+    if array is None:
+        return new_array
+    else:
+        for i in array:
+            new_array.append(i[0])
+        return new_array
 
 
 def delete_tag(tag, user_id_str):
@@ -433,7 +450,8 @@ async def add_all_to_db(message: types.Message):
                 x.set_category_name("text")
                 x.set_message(message.text)
                 array = list(set(tag_array(x.get_user_id_str())))
-                array.remove("without")
+                if array.count("without"):
+                    array.remove("without")
                 keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
                 keyboard_for_file.add(*array, "Пропустить")
                 await message.answer("Введите tag или нажмите пропустить", reply_markup=keyboard_for_file)

@@ -2,7 +2,7 @@ import logging
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters import Text
-import sqlite3
+import psycopg2
 
 from aiogram.types import ContentType
 from config import *
@@ -15,7 +15,7 @@ command = ["Поиск", "Удаление"]
 keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 keyboard.add(*command)
 
-base = sqlite3.connect('users.db')
+base = psycopg2.connect(DB_URI, sslmode="require")
 cur = base.cursor()
 
 user_dict = {}

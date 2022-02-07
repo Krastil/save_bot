@@ -77,7 +77,7 @@ async def bot_start(message: types.Message):
     global keyboard, user_dict
     user_id = message.from_user.id
     user_dict[user_id] = UserIdFromTg(user_id)
-    base.execute('CREATE TABLE IF NOT EXISTS ' + user_dict[user_id].get_user_id_str() + ' (category TEXT NOT NULL, tag TEXT NOT NULL, description TEXT NOT NULL)')
+    cur.execute('CREATE TABLE IF NOT EXISTS ' + user_dict[user_id].get_user_id_str() + ' (category TEXT NOT NULL, tag TEXT NOT NULL, description TEXT NOT NULL)')
     base.commit()
     await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
                          reply_markup=keyboard)

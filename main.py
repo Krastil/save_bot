@@ -456,12 +456,11 @@ async def add_text(message: types.Message):
     user_dict[user_id] = UserIdFromTg(user_id)
     for key in user_dict:
         if key == message.from_user.id:
+            x = user_dict[key]
             x.set_com("add_tag")
             x.set_category_name("text")
             x.set_message(message.text)
             array = list(set(tag_array(x.get_user_id_str())))
-            if array.count("without"):
-                array.remove("without")
             keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             keyboard_for_file.add(*array, "Пропустить")
             await message.answer("Введите tag или нажмите пропустить", reply_markup=keyboard_for_file)

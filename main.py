@@ -162,6 +162,8 @@ def delete_description(tag, description, user_id_str):
 @dp.message_handler(content_types=ContentType.PHOTO)
 async def add_photo(message: types.Message):
     global keyboard, user_dict
+    user_id = message.from_user.id
+    user_dict[user_id] = UserIdFromTg(user_id)
     for key in user_dict:
         if key == message.from_user.id:
             x = user_dict[key]
@@ -177,6 +179,8 @@ async def add_photo(message: types.Message):
 @dp.message_handler(content_types=ContentType.VIDEO)
 async def add_video(message: types.Message):
     global keyboard, user_dict
+    user_id = message.from_user.id
+    user_dict[user_id] = UserIdFromTg(user_id)
     for key in user_dict:
         if key == message.from_user.id:
             x = user_dict[key]
@@ -192,6 +196,8 @@ async def add_video(message: types.Message):
 @dp.message_handler(content_types=ContentType.DOCUMENT)
 async def add_doc(message: types.Message):
     global keyboard, user_dict
+    user_id = message.from_user.id
+    user_dict[user_id] = UserIdFromTg(user_id)
     for key in user_dict:
         if key == message.from_user.id:
             x = user_dict[key]
@@ -207,6 +213,8 @@ async def add_doc(message: types.Message):
 @dp.message_handler(content_types=ContentType.VOICE)
 async def add_voice(message: types.Message):
     global keyboard, user_dict
+    user_id = message.from_user.id
+    user_dict[user_id] = UserIdFromTg(user_id)
     for key in user_dict:
         if key == message.from_user.id:
             x = user_dict[key]
@@ -222,6 +230,8 @@ async def add_voice(message: types.Message):
 @dp.message_handler(content_types=ContentType.AUDIO)
 async def add_audio(message: types.Message):
     global keyboard, user_dict
+    user_id = message.from_user.id
+    user_dict[user_id] = UserIdFromTg(user_id)
     for key in user_dict:
         if key == message.from_user.id:
             x = user_dict[key]
@@ -237,6 +247,8 @@ async def add_audio(message: types.Message):
 @dp.message_handler()
 async def add_all_to_db(message: types.Message):
     global keyboard, user_dict
+    user_id = message.from_user.id
+    user_dict[user_id] = UserIdFromTg(user_id)
     for key in user_dict:
         if key == message.from_user.id:
             x = user_dict[key]

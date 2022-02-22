@@ -28,7 +28,6 @@ class UserIdFromTg(object):
     category_name = ""
     tag_name = ""
     message = ""
-    access = False
 
     def __init__(self, user_id):
         self.user_id = user_id
@@ -36,12 +35,6 @@ class UserIdFromTg(object):
 
     def get_user_id_str(self):
         return self.user_id_str
-
-    def set_access(self, comm):
-        self.access = comm
-
-    def get_access(self):
-        return self.access
 
     def set_message(self, comm):
         self.message = comm
@@ -69,7 +62,7 @@ class UserIdFromTg(object):
 
 
 def clean(user_id):
-    global user_dict
+    global user_dict, count
     for key in user_dict:
         if key == user_id:
             x = user_dict[key]
@@ -77,7 +70,6 @@ def clean(user_id):
             x.set_category_name("")
             x.set_tag_name("")
             x.set_message("")
-            x.set_access(False)
 
 
 @dp.message_handler(commands=['start'])
@@ -170,201 +162,209 @@ def delete_description(tag, description, user_id_str):
 @dp.message_handler(content_types=ContentType.TEXT)
 async def add_all_to_db(message: types.Message):
     global keyboard, user_dict
+    if message.from_user.id in user_dict:
+        for key in user_dict:
+            if key == message.from_user.id:
+                x = user_dict[key]
+
+                if x.get_com() == "add_tag":
+                    if message.text == "Пропустить":
+                        x.set_tag_name("without")
+                        await add_to_db(x.get_category_name(), x.get_tag_name(), x.get_message(), x.get_user_id_str())
+                        await message.answer("Сообщение добавлено")
+                        await message.answer(
+                            "Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
+                            reply_markup=keyboard)
+                        clean(key)
+                    else:
+                        x.set_tag_name(message.text)
+                        await add_to_db(x.get_category_name(), x.get_tag_name(), x.get_message(), x.get_user_id_str())
+                        await message.answer("Сообщение добавлено")
+                        await message.answer(
+                            "Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
+                            reply_markup=keyboard)
+                        clean(key)
+                elif x.get_com() == "" and message.text == "Поиск":
+                    x.set_com("search")
+                    keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+                    keyboard_for_file.add("По tag", "Без tag", "Показать все сообщения")
+                    await message.answer("Выберите тип поиска", reply_markup=keyboard_for_file)
+                elif x.get_com() == "" and message.text == "Удаление":
+                    x.set_com("delete")
+                    keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+                    keyboard_for_file.add("Tag", "Сообщение")
+                    await message.answer("Выберите что хотите удалить", reply_markup=keyboard_for_file)
+                elif x.get_com() == "search":
+                    if message.text == "По tag":
+                        array = list(set(tag_array(x.get_user_id_str())))
+                        if array.count("without"):
+                            array.remove("without")
+                        x.set_com("choose_tag")
+                        keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+                        keyboard_for_file.add(*array)
+                        await message.answer("Выберите tag", reply_markup=keyboard_for_file)
+                    if message.text == "Без tag":
+                        x.set_tag_name("without")
+                        array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
+                        for i in array:
+                            if category_with_description(i, x.get_user_id_str())[0] == "photo":
+                                await message.answer_photo(i)
+                            if category_with_description(i, x.get_user_id_str())[0] == "video":
+                                await message.answer_video(i)
+                            if category_with_description(i, x.get_user_id_str())[0] == "audio":
+                                await message.answer_audio(i)
+                            if category_with_description(i, x.get_user_id_str())[0] == "voice":
+                                await message.answer_voice(i)
+                            if category_with_description(i, x.get_user_id_str())[0] == "text":
+                                await message.answer(i)
+                            if category_with_description(i, x.get_user_id_str())[0] == "document":
+                                await message.answer_document(i)
+                        clean(key)
+                        await message.answer(
+                            "Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
+                            reply_markup=keyboard)
+                    if message.text == "Показать все сообщения":
+                        array = description_array(x.get_user_id_str())
+                        for i in array:
+                            if category_with_description(i, x.get_user_id_str())[0] == "photo":
+                                await message.answer_photo(i)
+                            if category_with_description(i, x.get_user_id_str())[0] == "video":
+                                await message.answer_video(i)
+                            if category_with_description(i, x.get_user_id_str())[0] == "audio":
+                                await message.answer_audio(i)
+                            if category_with_description(i, x.get_user_id_str())[0] == "voice":
+                                await message.answer_voice(i)
+                            if category_with_description(i, x.get_user_id_str())[0] == "text":
+                                await message.answer(i)
+                            if category_with_description(i, x.get_user_id_str())[0] == "document":
+                                await message.answer_document(i)
+                        await message.answer(
+                            "Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
+                            reply_markup=keyboard)
+                        clean(key)
+                elif x.get_com() == "choose_tag":
+                    x.set_tag_name(message.text)
+                    array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
+                    for i in array:
+                        if category_with_description(i, x.get_user_id_str())[0] == "photo":
+                            await message.answer_photo(i)
+                        if category_with_description(i, x.get_user_id_str())[0] == "video":
+                            await message.answer_video(i)
+                        if category_with_description(i, x.get_user_id_str())[0] == "audio":
+                            await message.answer_audio(i)
+                        if category_with_description(i, x.get_user_id_str())[0] == "voice":
+                            await message.answer_voice(i)
+                        if category_with_description(i, x.get_user_id_str())[0] == "text":
+                            await message.answer(i)
+                        if category_with_description(i, x.get_user_id_str())[0] == "document":
+                            await message.answer_document(i)
+                    clean(key)
+                    await message.answer(
+                        "Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
+                        reply_markup=keyboard)
+                elif x.get_com() == "delete":
+                    if message.text == "Сообщение":
+                        array = list(set(tag_array(x.get_user_id_str())))
+                        if array.count("without"):
+                            array.remove("without")
+                        x.set_com("delete_message")
+                        keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+                        keyboard_for_file.add(*array, "Сообщения без tag")
+                        await message.answer("Выберите tag", reply_markup=keyboard_for_file)
+                    if message.text == "Tag":
+                        array = list(set(tag_array(x.get_user_id_str())))
+                        if array.count("without"):
+                            array.remove("without")
+                        x.set_com("delete_tag")
+                        keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+                        keyboard_for_file.add(*array)
+                        await message.answer("Выберите tag", reply_markup=keyboard_for_file)
+                elif x.get_com() == "delete_message":
+                    if message.text == "Сообщения без tag":
+                        x.set_tag_name("without")
+                        array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
+                        var = 1
+                        for i in array:
+                            if category_with_description(i, x.get_user_id_str())[0] == "photo":
+                                await message.answer_photo(i, str(var) + ")")
+                            if category_with_description(i, x.get_user_id_str())[0] == "video":
+                                await message.answer_video(i, caption=str(var) + ')')
+                            if category_with_description(i, x.get_user_id_str())[0] == "audio":
+                                await message.answer_audio(i, str(var) + ")")
+                            if category_with_description(i, x.get_user_id_str())[0] == "voice":
+                                await message.answer_voice(i, str(var) + ")")
+                            if category_with_description(i, x.get_user_id_str())[0] == "text":
+                                await message.answer(str(var) + ") " + i)
+                            if category_with_description(i, x.get_user_id_str())[0] == "document":
+                                await message.answer_document(i, caption=str(var) + ')')
+                            var = var + 1
+                        x.set_com("delete_message_without")
+                        await message.answer("Введите цифру сообщения, которое хотите удалить")
+                    else:
+                        x.set_tag_name(message.text)
+                        array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
+                        var = 1
+                        for i in array:
+                            if category_with_description(i, x.get_user_id_str())[0] == "photo":
+                                await message.answer_photo(i, str(var) + ")")
+                            if category_with_description(i, x.get_user_id_str())[0] == "video":
+                                await message.answer_video(i, caption=str(var) + ')')
+                            if category_with_description(i, x.get_user_id_str())[0] == "audio":
+                                await message.answer_audio(i, str(var) + ")")
+                            if category_with_description(i, x.get_user_id_str())[0] == "voice":
+                                await message.answer_voice(i, str(var) + ")")
+                            if category_with_description(i, x.get_user_id_str())[0] == "text":
+                                await message.answer(str(var) + ") " + i)
+                            if category_with_description(i, x.get_user_id_str())[0] == "document":
+                                await message.answer_document(i, caption=str(var) + ')')
+                            var = var + 1
+                        x.set_com("delete_message_with")
+                        await message.answer("Введите цифру сообщения, которое хотите удалить")
+                elif x.get_com() == "delete_message_with":
+                    array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
+                    var = 1
+                    for i in array:
+                        if str(var) == message.text:
+                            delete_description(x.get_tag_name(), i, x.get_user_id_str())
+                        var = var + 1
+                    await message.answer("Сообщение удалено")
+                    await message.answer(
+                        "Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
+                        reply_markup=keyboard)
+                    clean(key)
+                elif x.get_com() == "delete_message_without":
+                    array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
+                    var = 1
+                    for i in array:
+                        if str(var) == message.text:
+                            delete_description(x.get_tag_name(), i, x.get_user_id_str())
+                        var = var + 1
+                    await message.answer("Сообщение удалено")
+                    await message.answer(
+                        "Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
+                        reply_markup=keyboard)
+                    clean(key)
+                elif x.get_com() == "delete_tag":
+                    x.set_tag_name(message.text)
+                    delete_tag(x.get_tag_name(), x.get_user_id_str())
+                    await message.answer("Tag был удален")
+                    await message.answer(
+                        "Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
+                        reply_markup=keyboard)
+                    clean(key)
+                elif x.get_com() == "":
+                    await add_text(message)
+    else:
+        await add_text(message)
+
+
+async def add_text(message: types.Message):
+    global keyboard, user_dict
+    user_id = message.from_user.id
+    user_dict[user_id] = UserIdFromTg(user_id)
     for key in user_dict:
-        if key == message.from_user.id and user_dict[key].get_access():
+        if key == message.from_user.id:
             x = user_dict[key]
-
-            if x.get_com() == "add_tag" and message.text == "Пропустить":
-                x.set_tag_name("without")
-                await add_to_db(x.get_category_name(), x.get_tag_name(), x.get_message(), x.get_user_id_str())
-                await message.answer("Сообщение добавлено")
-                await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
-                                     reply_markup=keyboard)
-                clean(key)
-
-            if x.get_com() == "add_tag":
-                x.set_tag_name(message.text)
-                await add_to_db(x.get_category_name(), x.get_tag_name(), x.get_message(), x.get_user_id_str())
-                await message.answer("Сообщение добавлено")
-                await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
-                                     reply_markup=keyboard)
-                clean(key)
-
-            if x.get_com() == "choose_tag":
-                x.set_tag_name(message.text)
-                array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
-                for i in array:
-                    if category_with_description(i, x.get_user_id_str())[0] == "photo":
-                        await message.answer_photo(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "video":
-                        await message.answer_video(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "audio":
-                        await message.answer_audio(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "voice":
-                        await message.answer_voice(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "text":
-                        await message.answer(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "document":
-                        await message.answer_document(i)
-                clean(key)
-                await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
-                                     reply_markup=keyboard)
-
-            if x.get_com() == "search" and message.text == "По tag":
-                array = list(set(tag_array(x.get_user_id_str())))
-                if array.count("without"):
-                    array.remove("without")
-                x.set_com("choose_tag")
-                keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-                keyboard_for_file.add(*array)
-                await message.answer("Выберите tag", reply_markup=keyboard_for_file)
-
-            if x.get_com() == "search" and message.text == "Без tag":
-                x.set_tag_name("without")
-                array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
-                for i in array:
-                    if category_with_description(i, x.get_user_id_str())[0] == "photo":
-                        await message.answer_photo(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "video":
-                        await message.answer_video(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "audio":
-                        await message.answer_audio(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "voice":
-                        await message.answer_voice(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "text":
-                        await message.answer(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "document":
-                        await message.answer_document(i)
-                clean(key)
-                await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
-                                     reply_markup=keyboard)
-
-            if x.get_com() == "search" and message.text == "Показать все сообщения":
-                array = description_array(x.get_user_id_str())
-                for i in array:
-                    if category_with_description(i, x.get_user_id_str())[0] == "photo":
-                        await message.answer_photo(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "video":
-                        await message.answer_video(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "audio":
-                        await message.answer_audio(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "voice":
-                        await message.answer_voice(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "text":
-                        await message.answer(i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "document":
-                        await message.answer_document(i)
-                clean(key)
-                await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
-                                     reply_markup=keyboard)
-
-            if x.get_com() == "" and message.text == "Поиск":
-                x.set_com("search")
-                keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-                keyboard_for_file.add("По tag", "Без tag", "Показать все сообщения")
-                await message.answer("Выберите тип поиска", reply_markup=keyboard_for_file)
-
-            if x.get_com() == "delete_tag":
-                x.set_tag_name(message.text)
-                delete_tag(x.get_tag_name(), x.get_user_id_str())
-                await message.answer("Tag был удален")
-                await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
-                                     reply_markup=keyboard)
-                clean(key)
-
-            if x.get_com() == "delete_message_without":
-                array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
-                var = 1
-                for i in array:
-                    if str(var) == message.text:
-                        delete_description(x.get_tag_name(), i, x.get_user_id_str())
-                    var = var + 1
-                await message.answer("Сообщение удалено")
-                await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
-                                     reply_markup=keyboard)
-                clean(key)
-
-            if x.get_com() == "delete_message_with":
-                array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
-                var = 1
-                for i in array:
-                    if str(var) == message.text:
-                        delete_description(x.get_tag_name(), i, x.get_user_id_str())
-                    var = var + 1
-                await message.answer("Сообщение удалено")
-                await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
-                                     reply_markup=keyboard)
-                clean(key)
-
-            if x.get_com() == "delete_message" and message.text == "Сообщения без tag":
-                x.set_tag_name("without")
-                array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
-                var = 1
-                for i in array:
-                    if category_with_description(i, x.get_user_id_str())[0] == "photo":
-                        await message.answer_photo(i, str(var) + ")")
-                    if category_with_description(i, x.get_user_id_str())[0] == "video":
-                        await message.answer_video(i, caption=str(var) + ')')
-                    if category_with_description(i, x.get_user_id_str())[0] == "audio":
-                        await message.answer_audio(i, str(var) + ")")
-                    if category_with_description(i, x.get_user_id_str())[0] == "voice":
-                        await message.answer_voice(i, str(var) + ")")
-                    if category_with_description(i, x.get_user_id_str())[0] == "text":
-                        await message.answer(str(var) + ") " + i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "document":
-                        await message.answer_document(i, caption=str(var) + ')')
-                    var = var + 1
-                x.set_com("delete_message_without")
-                await message.answer("Введите цифру сообщения, которое хотите удалить")
-
-            if x.get_com() == "delete_message":
-                x.set_tag_name(message.text)
-                array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
-                var = 1
-                for i in array:
-                    if category_with_description(i, x.get_user_id_str())[0] == "photo":
-                        await message.answer_photo(i, str(var) + ")")
-                    if category_with_description(i, x.get_user_id_str())[0] == "video":
-                        await message.answer_video(i, caption=str(var) + ')')
-                    if category_with_description(i, x.get_user_id_str())[0] == "audio":
-                        await message.answer_audio(i, str(var) + ")")
-                    if category_with_description(i, x.get_user_id_str())[0] == "voice":
-                        await message.answer_voice(i, str(var) + ")")
-                    if category_with_description(i, x.get_user_id_str())[0] == "text":
-                        await message.answer(str(var) + ") " + i)
-                    if category_with_description(i, x.get_user_id_str())[0] == "document":
-                        await message.answer_document(i, caption=str(var) + ')')
-                    var = var + 1
-                x.set_com("delete_message_with")
-                await message.answer("Введите цифру сообщения, которое хотите удалить")
-
-            if x.get_com() == "delete" and message.text == "Сообщение":
-                array = list(set(tag_array(x.get_user_id_str())))
-                if array.count("without"):
-                    array.remove("without")
-                x.set_com("delete_message")
-                keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-                keyboard_for_file.add(*array, "Сообщения без tag")
-                await message.answer("Выберите tag", reply_markup=keyboard_for_file)
-
-            if x.get_com() == "delete" and message.text == "Tag":
-                array = list(set(tag_array(x.get_user_id_str())))
-                if array.count("without"):
-                    array.remove("without")
-                x.set_com("delete_tag")
-                keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-                keyboard_for_file.add(*array)
-                await message.answer("Выберите tag", reply_markup=keyboard_for_file)
-
-            if x.get_com() == "" and message.text == "Удаление":
-                x.set_com("delete")
-                keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-                keyboard_for_file.add("Tag", "Сообщение")
-                await message.answer("Выберите что хотите удалить", reply_markup=keyboard_for_file)
-
-        if key == message.from_user.id and not user_dict[key].get_access():
-            x = user_dict[key]
-            x.set_access(True)
             x.set_com("add_tag")
             x.set_category_name("text")
             x.set_message(message.text)

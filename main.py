@@ -167,7 +167,7 @@ def delete_description(tag, description, user_id_str):
     base.commit()
 
 
-@dp.message_handler()
+@dp.message_handler(content_types=ContentType.TEXT)
 async def add_all_to_db(message: types.Message):
     global keyboard, user_dict
     for key in user_dict:
@@ -369,6 +369,8 @@ async def add_all_to_db(message: types.Message):
             x.set_category_name("text")
             x.set_message(message.text)
             array = list(set(tag_array(x.get_user_id_str())))
+            if array.count("without"):
+                array.remove("without")
             keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             keyboard_for_file.add(*array, "Пропустить")
             await message.answer("Введите tag или нажмите пропустить", reply_markup=keyboard_for_file)
@@ -386,6 +388,8 @@ async def add_photo(message: types.Message):
             x.set_category_name("photo")
             x.set_message(message.photo[-1].file_id)
             array = list(set(tag_array(x.get_user_id_str())))
+            if array.count("without"):
+                array.remove("without")
             keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             keyboard_for_file.add(*array, "Пропустить")
             await message.answer("Введите tag или нажмите пропустить", reply_markup=keyboard_for_file)
@@ -403,6 +407,8 @@ async def add_video(message: types.Message):
             x.set_category_name("video")
             x.set_message(message.video.file_id)
             array = list(set(tag_array(x.get_user_id_str())))
+            if array.count("without"):
+                array.remove("without")
             keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             keyboard_for_file.add(*array, "Пропустить")
             await message.answer("Введите tag или нажмите пропустить", reply_markup=keyboard_for_file)
@@ -420,6 +426,8 @@ async def add_doc(message: types.Message):
             x.set_category_name("document")
             x.set_message(message.document.file_id)
             array = list(set(tag_array(x.get_user_id_str())))
+            if array.count("without"):
+                array.remove("without")
             keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             keyboard_for_file.add(*array, "Пропустить")
             await message.answer("Введите tag или нажмите пропустить", reply_markup=keyboard_for_file)
@@ -437,6 +445,8 @@ async def add_voice(message: types.Message):
             x.set_category_name("voice")
             x.set_message(message.voice.file_id)
             array = list(set(tag_array(x.get_user_id_str())))
+            if array.count("without"):
+                array.remove("without")
             keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             keyboard_for_file.add(*array, "Пропустить")
             await message.answer("Введите tag или нажмите пропустить", reply_markup=keyboard_for_file)
@@ -454,6 +464,8 @@ async def add_audio(message: types.Message):
             x.set_category_name("audio")
             x.set_message(message.audio.file_id)
             array = list(set(tag_array(x.get_user_id_str())))
+            if array.count("without"):
+                array.remove("without")
             keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             keyboard_for_file.add(*array, "Пропустить")
             await message.answer("Введите tag или нажмите пропустить", reply_markup=keyboard_for_file)

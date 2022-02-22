@@ -28,6 +28,7 @@ class UserIdFromTg(object):
     category_name = ""
     tag_name = ""
     message = ""
+    access = False
 
     def __init__(self, user_id):
         self.user_id = user_id
@@ -35,6 +36,12 @@ class UserIdFromTg(object):
 
     def get_user_id_str(self):
         return self.user_id_str
+
+    def set_access(self, comm):
+        self.access = comm
+
+    def get_access(self):
+        return self.access
 
     def set_message(self, comm):
         self.message = comm
@@ -70,6 +77,7 @@ def clean(user_id):
             x.set_category_name("")
             x.set_tag_name("")
             x.set_message("")
+            x.set_access(False)
 
 
 @dp.message_handler(commands=['start'])
@@ -163,9 +171,8 @@ def delete_description(tag, description, user_id_str):
 async def add_all_to_db(message: types.Message):
     global keyboard, user_dict
     for key in user_dict:
-        if key == message.from_user.id:
+        if key == message.from_user.id and user_dict[key].get_access():
             x = user_dict[key]
-            access = True
 
             if x.get_com() == "add_tag" and message.text == "Пропустить":
                 x.set_tag_name("without")
@@ -174,7 +181,6 @@ async def add_all_to_db(message: types.Message):
                 await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
                                      reply_markup=keyboard)
                 clean(key)
-                access = False
 
             if x.get_com() == "add_tag":
                 x.set_tag_name(message.text)
@@ -183,7 +189,6 @@ async def add_all_to_db(message: types.Message):
                 await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
                                      reply_markup=keyboard)
                 clean(key)
-                access = False
 
             if x.get_com() == "choose_tag":
                 x.set_tag_name(message.text)
@@ -202,7 +207,6 @@ async def add_all_to_db(message: types.Message):
                     if category_with_description(i, x.get_user_id_str())[0] == "document":
                         await message.answer_document(i)
                 clean(key)
-                access = False
                 await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
                                      reply_markup=keyboard)
 
@@ -232,7 +236,6 @@ async def add_all_to_db(message: types.Message):
                     if category_with_description(i, x.get_user_id_str())[0] == "document":
                         await message.answer_document(i)
                 clean(key)
-                access = False
                 await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
                                      reply_markup=keyboard)
 
@@ -252,7 +255,6 @@ async def add_all_to_db(message: types.Message):
                     if category_with_description(i, x.get_user_id_str())[0] == "document":
                         await message.answer_document(i)
                 clean(key)
-                access = False
                 await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
                                      reply_markup=keyboard)
 
@@ -269,7 +271,6 @@ async def add_all_to_db(message: types.Message):
                 await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
                                      reply_markup=keyboard)
                 clean(key)
-                access = False
 
             if x.get_com() == "delete_message_without":
                 array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
@@ -282,7 +283,6 @@ async def add_all_to_db(message: types.Message):
                 await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
                                      reply_markup=keyboard)
                 clean(key)
-                access = False
 
             if x.get_com() == "delete_message_with":
                 array = tag_array_with_description(x.get_tag_name(), x.get_user_id_str())
@@ -295,7 +295,6 @@ async def add_all_to_db(message: types.Message):
                 await message.answer("Отправьте сообщение или файл, который хотите сохранить.\r\n. - Команда сброса.",
                                      reply_markup=keyboard)
                 clean(key)
-                access = False
 
             if x.get_com() == "delete_message" and message.text == "Сообщения без tag":
                 x.set_tag_name("without")
@@ -362,6 +361,17 @@ async def add_all_to_db(message: types.Message):
                 keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
                 keyboard_for_file.add("Tag", "Сообщение")
                 await message.answer("Выберите что хотите удалить", reply_markup=keyboard_for_file)
+
+        if key == message.from_user.id and not user_dict[key].get_access():
+            x = user_dict[key]
+            x.set_access(True)
+            x.set_com("add_tag")
+            x.set_category_name("text")
+            x.set_message(message.text)
+            array = list(set(tag_array(x.get_user_id_str())))
+            keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            keyboard_for_file.add(*array, "Пропустить")
+            await message.answer("Введите tag или нажмите пропустить", reply_markup=keyboard_for_file)
 
 
 @dp.message_handler(content_types=ContentType.PHOTO)
@@ -443,23 +453,6 @@ async def add_audio(message: types.Message):
             x.set_com("add_tag")
             x.set_category_name("audio")
             x.set_message(message.audio.file_id)
-            array = list(set(tag_array(x.get_user_id_str())))
-            keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-            keyboard_for_file.add(*array, "Пропустить")
-            await message.answer("Введите tag или нажмите пропустить", reply_markup=keyboard_for_file)
-
-
-@dp.message_handler(content_types=ContentType.TEXT)
-async def add_text(message: types.Message):
-    global keyboard, user_dict
-    user_id = message.from_user.id
-    user_dict[user_id] = UserIdFromTg(user_id)
-    for key in user_dict:
-        if key == message.from_user.id:
-            x = user_dict[key]
-            x.set_com("add_tag")
-            x.set_category_name("text")
-            x.set_message(message.text)
             array = list(set(tag_array(x.get_user_id_str())))
             keyboard_for_file = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             keyboard_for_file.add(*array, "Пропустить")
